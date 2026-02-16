@@ -1,0 +1,35 @@
+{
+  "name": "open-http-wheel-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REST/HTTP-based Discord bot using the Wheel of Names API",
+  "license": "MIT",
+  "author": "Gunnar Omander <gunnar@gomander.dev>",
+  "type": "module",
+  "main": "src/app.ts",
+  "scripts": {
+    "start": "node --env-file=.env .",
+    "dev": "node --watch --env-file=.env .",
+    "deploy-commands": "node --env-file=.env src/deploy-commands.ts",
+    "check-types": "tsc",
+    "lint": "oxlint",
+    "format": "oxfmt"
+  },
+  "dependencies": {
+    "discord-interactions": "^4.4.0",
+    "h3": "^2.0.1-rc.14",
+    "snowtransfer": "~0.17.4",
+    "validate-color": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.13",
+    "discord-api-types": "~0.38.39",
+    "editorconfig": "^3.0.1",
+    "oxfmt": "~0.33.0",
+    "oxlint": "^1.48.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">= 24"
+  }
+}
