@@ -29,14 +29,13 @@ app.post('/', async ({ req, res }) => {
       return { type: DInteractionResponseType.PONG }
 
     case DInteractionType.APPLICATION_COMMAND:
-      void commands[interaction.data.name]
-        .execute(interaction as any)
-        .catch(handleError(interaction))
-      break
+      setImmediate(() => {
+        void commands[interaction.data.name]
+          .execute(interaction as any)
+          .catch(handleError(interaction))
+      })
+      return { type: DInteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE }
   }
-
-  // Send an empty 202 response to Discord
-  res.status = 202
 })
 
 app.get('/guild-count', getBotStats)

@@ -1,6 +1,6 @@
 import { env } from 'node:process'
 import { CLIENT_ID, getBotStats } from '../../../app-util.ts'
-import { createCommandOptionsFromStrings, sendResponse } from '../../command-util.ts'
+import { createCommandOptionsFromStrings, followupDeferredResponse } from '../../command-util.ts'
 import { DCommandOptionType, type WheelSubcommand } from '../../../types.ts'
 import { getOptionValue } from '../wheel-util.ts'
 
@@ -168,7 +168,7 @@ const help: WheelSubcommand = {
   execute: async (interaction) => {
     const topic = getOptionValue(interaction, 'topic') || 'general'
     const content = await helpTexts[topic]()
-    await sendResponse(interaction, content, { ephemeral: true })
+    await followupDeferredResponse(interaction, content, { suppressEmbeds: false, ephemeral: true })
   }
 }
 

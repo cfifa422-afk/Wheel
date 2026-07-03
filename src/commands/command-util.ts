@@ -24,25 +24,23 @@ export async function sendResponse(
   })
 }
 
-export async function deferResponse(
+export function deferResponse(
   interaction: ChatInputCommandInteraction,
-  { ephemeral = false } = {}
+  _options: { ephemeral?: boolean } = {}
 ) {
+  // The HTTP response in app.ts already sends the deferred acknowledgement (type 5).
+  // This function just marks the interaction as deferred for error-handling purposes.
   interaction.deferred = true
-  await client.interaction.createInteractionResponse(interaction.id, interaction.token, {
-    type: DInteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { flags: ephemeral ? 64 : undefined }
-  })
 }
 
 export async function followupDeferredResponse(
   interaction: APIInteraction,
   message: string,
-  { suppressEmbeds = true } = {}
+  { suppressEmbeds = true, ephemeral = false } = {}
 ) {
   return await client.interaction.createFollowupMessage(CLIENT_ID, interaction.token, {
     content: message,
-    flags: suppressEmbeds ? 4 : undefined
+    flags: (suppressEmbeds ? 4 : 0) | (ephemeral ? 64 : 0) || undefined
   })
 }
 
@@ -60,10 +58,7 @@ export async function sendError(
   error?: unknown
 ) {
   const errorString = unknownErrorToString(error)
-  if (interaction.deferred) {
-    return await followupDeferredResponse(interaction, errorString, { suppressEmbeds: true })
-  }
-  await sendResponse(interaction, errorString, { ephemeral: true, suppressEmbeds: true })
+  return await followupDeferredResponse(interaction, errorString, { suppressEmbeds: true })
 }
 
 export function unknownErrorToString(error: unknown) {
