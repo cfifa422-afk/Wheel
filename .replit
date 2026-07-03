@@ -9,7 +9,7 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-PORT = "3000"
+PORT = "3001"
 WHEEL_OF_NAMES_API = "https://wheelofnames.com/api/v2"
 MIN_SPIN_TIME = "3"
 DEFAULT_SPIN_TIME = "3"
@@ -33,17 +33,21 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 3000
-
-[workflows.workflow.metadata]
-outputType = "console"
+waitForPort = 3001
 
 [[ports]]
 localPort = 3000
 externalPort = 3000
+
+[[ports]]
+localPort = 3001
+externalPort = 80
 
 [deployment]
 deploymentTarget = "vm"
