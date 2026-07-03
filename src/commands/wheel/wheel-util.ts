@@ -2,6 +2,7 @@ import { env } from 'node:process'
 import validateColor from 'validate-color'
 import { client, CLIENT_ID, DEFAULT_SPIN_TIME, MAX_VISIBLE_ENTRIES } from '../../app-util.ts'
 import { themeDictionary } from './ColorThemeList.ts'
+import { saveSpinState } from './wheel-state.ts'
 import type {
   APIInteractionDataResolved,
   APIMessage,
@@ -178,16 +179,20 @@ export async function spinAndSendToDiscord(
   wheelConfig: WheelConfig,
   imageFormat: 'gif' | 'webp'
 ) {
-  const result = await getAnimationFromWheelConfig(
-    wheelConfig,
-    imageFormat,
-    getOptionBoolean(interaction, 'loop', 'ON')
-  )
+  const loop = getOptionBoolean(interaction, 'loop', 'ON')
+  const spoiler = getOptionBoolean(interaction, 'spoilertag')
+  const userId = interaction.member?.user.id || interaction.user!.id
 
+  const result = await getAnimationFromWheelConfig(wheelConfig, imageFormat, loop)
   const message = await sendAnimation(interaction.token, result.animation, imageFormat)
-  if (!(result.winner.text || getOptionValue(interaction, 'respinbuttons'))) return
-  await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1000 + 500))
-  await editInWinner(interaction, message.id, result.winner, wheelConfig)
+
+  if (!result.winner.text) return
+
+  await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1_000 + 500))
+  await editAnimationMessage(interaction.token, message.id, result.winner, wheelConfig, spoiler, userId)
+
+  const stateKey = saveSpinState({ wheelConfig, imageFormat, winner: result.winner, spoiler, userId })
+  await sendSpinButtons(interaction.token, result.winner, stateKey, spoiler)
 }
 
 async function sendAnimation(
@@ -201,27 +206,67 @@ async function sendAnimation(
   })
 }
 
-async function editInWinner(
-  interaction: WheelInteraction,
+export async function editAnimationMessage(
+  token: string,
   messageId: string,
   winner: WheelEntry,
-  wheelConfig: WheelConfig
+  wheelConfig: WheelConfig,
+  spoiler: boolean,
+  userId: string
 ) {
   if (!winner.id) throw Error('Winning entry is missing ID')
   let winnerText = winner.text ?? ''
-  const spoiler = getOptionBoolean(interaction, 'spoilertag')
   if (winnerText) {
     if (spoiler) winnerText = `||${winnerText}||`
     winnerText = `\n# ${winnerText}`
   }
-  const userId = interaction.member?.user.id || interaction.user!.id
-  await client.interaction.editFollowupMessage(CLIENT_ID, interaction.token, messageId, {
+  await client.interaction.editFollowupMessage(CLIENT_ID, token, messageId, {
     content:
       `### ${
         (winner.message ?? wheelConfig.winnerMessage).replaceAll('%u', `<@${userId}>`) ||
         'We have a winner!'
       }` + winnerText
   })
+}
+
+export async function sendSpinButtons(
+  token: string,
+  winner: WheelEntry,
+  stateKey: string,
+  spoiler: boolean
+) {
+  const winnerName = winner.text ?? 'Unknown'
+  const displayName = spoiler ? `||**${winnerName}**||` : `**${winnerName}**`
+  await client.interaction.createFollowupMessage(CLIENT_ID, token, {
+    embeds: [
+      {
+        title: '🎡 We have a winner!',
+        description: displayName,
+        color: 0x57f287
+      }
+    ],
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 2,
+            label: 'Spin Again (Remove Winner)',
+            style: 1,
+            custom_id: `spin_without:${stateKey}`,
+            emoji: { name: '🔄' }
+          },
+          {
+            type: 2,
+            label: 'Spin Again (Keep All)',
+            style: 2,
+            custom_id: `spin_with:${stateKey}`,
+            emoji: { name: '🎡' }
+          }
+        ]
+      }
+    ]
+  } as any)
 }
 
 export function getOptionValue<T = string>(interaction: WheelInteraction, optionName: string) {

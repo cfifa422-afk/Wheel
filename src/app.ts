@@ -2,6 +2,7 @@ import { env } from 'node:process'
 import { H3, serve } from 'h3'
 import { getBotStats, handleError, verifyKey } from './app-util.ts'
 import commands from './commands/index.ts'
+import { handleRespinAction } from './commands/wheel/component-handler.ts'
 import { type APIInteraction, DInteractionType, DInteractionResponseType } from './types.ts'
 
 const CLIENT_PUBLIC_KEY = env.CLIENT_PUBLIC_KEY
@@ -32,6 +33,13 @@ app.post('/', async ({ req, res }) => {
       setImmediate(() => {
         void commands[interaction.data.name]
           .execute(interaction as any)
+          .catch(handleError(interaction))
+      })
+      return { type: DInteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE }
+
+    case DInteractionType.MESSAGE_COMPONENT:
+      setImmediate(() => {
+        void handleRespinAction(interaction)
           .catch(handleError(interaction))
       })
       return { type: DInteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE }
