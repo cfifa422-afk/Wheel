@@ -239,13 +239,23 @@ export async function sendSpinButtons(
   spoiler: boolean
 ) {
   const winnerName = winner.text ?? 'Unknown'
-  const displayName = spoiler ? `||**${winnerName}**||` : `**${winnerName}**`
+  const displayName = spoiler ? `||${winnerName}||` : winnerName
   await client.interaction.createFollowupMessage(CLIENT_ID, token, {
     embeds: [
       {
-        title: '🎡 We have a winner!',
-        description: displayName,
-        color: 0x57f287
+        title: 'Result',
+        description: `**${displayName}**`,
+        color: 0x2b2d31,
+        fields: [
+          {
+            name: 'Spin Options',
+            value: 'Use the buttons below to spin again with or without the current winner.',
+            inline: false
+          }
+        ],
+        footer: {
+          text: 'Wheel of Names'
+        }
       }
     ],
     components: [
@@ -254,17 +264,15 @@ export async function sendSpinButtons(
         components: [
           {
             type: 2,
-            label: 'Spin Again (Remove Winner)',
+            label: 'Spin Again — Remove Winner',
             style: 1,
-            custom_id: `spin_without:${stateKey}`,
-            emoji: { name: '🔄' }
+            custom_id: `spin_without:${stateKey}`
           },
           {
             type: 2,
-            label: 'Spin Again (Keep All)',
+            label: 'Spin Again — Keep All',
             style: 2,
-            custom_id: `spin_with:${stateKey}`,
-            emoji: { name: '🎡' }
+            custom_id: `spin_with:${stateKey}`
           }
         ]
       }
