@@ -31,7 +31,11 @@ export async function getAnimationFromWheelConfig(
       initialAngle: Math.random() * 2 * Math.PI
     })
   })
-  if (!response.ok || !response.body) throw Error('Failed to get animation')
+  if (!response.ok || !response.body) {
+    const errorText = await response.text().catch(() => '(no body)')
+    console.error(`Wheel API error ${response.status}: ${errorText}`)
+    throw Error(`Failed to get animation (${response.status}: ${errorText.slice(0, 200)})`)
+  }
   const data = await response.formData()
   const file = data.get('animation') as File
   const arrayBuffer = await file.arrayBuffer()
@@ -338,7 +342,7 @@ export function createWheelConfig(config?: Partial<WheelConfig>): WheelConfig {
     duringSpinSoundVolume: 0,
     animateWinner: false,
     autoRemoveWinner: false,
-    title: '',
+    title: 'Wheel',
     description: '',
     displayHideButton: false,
     displayRemoveButton: false,
