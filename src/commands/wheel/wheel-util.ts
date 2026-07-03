@@ -41,11 +41,14 @@ export async function getAnimationFromWheelConfig(
   const file = data.get('animation') as File
   const arrayBuffer = await file.arrayBuffer()
   const winner = JSON.parse(data.get('winner') as string)
+  console.log('[winner raw]', JSON.stringify(winner))
+  const resolvedText = winner.discordId || (Array.isArray(winner.texts) ? winner.texts[0] : winner.texts) || winner.text
+  console.log('[winner resolvedText]', resolvedText)
   return {
     animation: Buffer.from(arrayBuffer),
     winner: {
       ...winner,
-      text: winner.discordId || (Array.isArray(winner.texts) ? winner.texts[0] : winner.texts) || winner.text
+      text: resolvedText
     }
   }
 }
