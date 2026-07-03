@@ -1,0 +1,46 @@
+modules = ["nodejs-24"]
+[agent]
+expertMode = true
+stack = "BEST_EFFORT_FALLBACK"
+
+[nix]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+PORT = "3000"
+WHEEL_OF_NAMES_API = "https://wheelofnames.com/api/v2"
+MIN_SPIN_TIME = "3"
+DEFAULT_SPIN_TIME = "3"
+MAX_SPIN_TIME = "10"
+MAX_VISIBLE_ENTRIES = "120"
+BOT_VERSION = "DEV"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
