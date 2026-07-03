@@ -8,9 +8,9 @@
   "type": "module",
   "main": "src/app.ts",
   "scripts": {
-    "start": "node --env-file=.env .",
-    "dev": "node --watch --env-file=.env .",
-    "deploy-commands": "node --env-file=.env src/deploy-commands.ts",
+    "start": "node .",
+    "dev": "node --watch .",
+    "deploy-commands": "node src/deploy-commands.ts",
     "check-types": "tsc",
     "lint": "oxlint",
     "format": "oxfmt"
