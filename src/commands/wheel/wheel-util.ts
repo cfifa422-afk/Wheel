@@ -45,7 +45,7 @@ export async function getAnimationFromWheelConfig(
     animation: Buffer.from(arrayBuffer),
     winner: {
       ...winner,
-      text: winner.discordId || winner.texts
+      text: winner.discordId || (Array.isArray(winner.texts) ? winner.texts[0] : winner.texts) || winner.text
     }
   }
 }
