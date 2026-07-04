@@ -186,6 +186,10 @@ export async function spinAndSendToDiscord(
   const spoiler = getOptionBoolean(interaction, 'spoilertag')
   const userId = interaction.member?.user.id || interaction.user!.id
 
+  await client.interaction.editFollowupMessage(CLIENT_ID, interaction.token, '@original', {
+    content: 'Spinning the wheel...'
+  })
+
   const result = await getAnimationFromWheelConfig(wheelConfig, imageFormat, loop)
   const message = await sendAnimation(interaction.token, result.animation, imageFormat)
 
@@ -238,39 +242,20 @@ export async function sendSpinButtons(
   stateKey: string,
   spoiler: boolean
 ) {
-  const winnerName = winner.text ?? 'Unknown'
-  const displayName = spoiler ? `||${winnerName}||` : winnerName
   await client.interaction.createFollowupMessage(CLIENT_ID, token, {
-    embeds: [
-      {
-        title: 'Result',
-        description: `**${displayName}**`,
-        color: 0x2b2d31,
-        fields: [
-          {
-            name: 'Spin Options',
-            value: 'Use the buttons below to spin again with or without the current winner.',
-            inline: false
-          }
-        ],
-        footer: {
-          text: 'Wheel of Names'
-        }
-      }
-    ],
     components: [
       {
         type: 1,
         components: [
           {
             type: 2,
-            label: 'Spin Again — Remove Winner',
+            label: 'Remove winner and spin again',
             style: 1,
             custom_id: `spin_without:${stateKey}`
           },
           {
             type: 2,
-            label: 'Spin Again — Keep All',
+            label: 'Spin again (keep all)',
             style: 2,
             custom_id: `spin_with:${stateKey}`
           }
