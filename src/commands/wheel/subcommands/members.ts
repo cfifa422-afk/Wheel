@@ -25,7 +25,8 @@ const members: WheelSubcommand = {
       opts.backgroundColorOption,
       opts.spinTimeOption,
       opts.loopOption,
-      opts.winnerMessageOption
+      opts.winnerMessageOption,
+      opts.respinButtonOption
     ]
   },
   execute: async (interaction) => {

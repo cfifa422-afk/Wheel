@@ -38,18 +38,21 @@ export async function handleRespinAction(interaction: any) {
     true
   )
 
-  const newStateKey = saveSpinState({
-    wheelConfig,
-    imageFormat: state.imageFormat,
-    winner: result.winner,
-    spoiler: state.spoiler,
-    userId
-  })
+  const newStateKey = state.showRespinButton
+    ? saveSpinState({
+        wheelConfig,
+        imageFormat: state.imageFormat,
+        winner: result.winner,
+        spoiler: state.spoiler,
+        userId,
+        showRespinButton: true
+      })
+    : undefined
 
   console.log(`Sending ${(result.animation.byteLength / 1_000_000).toFixed(2)}MB animation to Discord (respin)`)
   const animMsg = await client.interaction.createFollowupMessage(CLIENT_ID, interaction.token, {
     files: [{ name: `wheel.${state.imageFormat}`, file: result.animation }],
-    components: [buildSpinButtons(newStateKey, true)]
+    ...(newStateKey ? { components: [buildSpinButtons(newStateKey, true)] } : {})
   } as any)
 
   await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1_000 + 500))

@@ -135,6 +135,8 @@ export interface WheelEntry {
   sound?: string
   message?: string
   enabled?: boolean
+  /** Discord mention string stored locally, stripped before sending to the API */
+  discordId?: string
 }
 
 export interface WheelConfig {

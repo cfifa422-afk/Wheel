@@ -56,3 +56,10 @@ export const winnerMessageOption: APIApplicationCommandStringOption = {
   min_length: 1,
   max_length: 100
 }
+
+export const respinButtonOption: APIApplicationCommandStringOption = {
+  name: 'respinbutton',
+  description: 'Show "Remove winner and spin again" button after spin (default ON)',
+  type: DCommandOptionType.STRING,
+  choices: createCommandOptionsFromStrings('ON', 'OFF')
+}

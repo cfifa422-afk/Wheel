@@ -6,6 +6,7 @@ export interface SpinState {
   winner: WheelEntry
   spoiler: boolean
   userId: string
+  showRespinButton: boolean
 }
 
 const states = new Map<string, SpinState>()

@@ -18,6 +18,22 @@ export async function getAnimationFromWheelConfig(
   loop?: boolean
 ): Promise<{ animation: Buffer; winner: WheelEntry }> {
   addIdsIfNotThere(wheelConfig.entries)
+
+  // Strip discordId and any other non-API fields before sending — the API
+  // rejects entries with unknown properties.
+  const sanitizedEntries = wheelConfig.entries.map(
+    ({ text, image, id, weight, color, sound, message, enabled }) => ({
+      ...(text !== undefined && { text }),
+      ...(image !== undefined && { image }),
+      ...(id !== undefined && { id }),
+      ...(weight !== undefined && { weight }),
+      ...(color !== undefined && { color }),
+      ...(sound !== undefined && { sound }),
+      ...(message !== undefined && { message }),
+      ...(enabled !== undefined && { enabled })
+    })
+  )
+
   const response = await fetch(`${env.WHEEL_OF_NAMES_API}/wheels/animate`, {
     method: 'POST',
     headers: {
@@ -25,7 +41,7 @@ export async function getAnimationFromWheelConfig(
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      wheelConfig,
+      wheelConfig: { ...wheelConfig, entries: sanitizedEntries },
       loop,
       imageFormat,
       responseFormat: 'formData',
@@ -41,15 +57,16 @@ export async function getAnimationFromWheelConfig(
   const file = data.get('animation') as File
   const arrayBuffer = await file.arrayBuffer()
   const winner = JSON.parse(data.get('winner') as string)
-  console.log('[winner raw]', JSON.stringify(winner))
-  const resolvedText = winner.discordId || (Array.isArray(winner.texts) ? winner.texts[0] : winner.texts) || winner.text
-  console.log('[winner resolvedText]', resolvedText)
+  // Restore discordId from original entry using the winner's id
+  const originalEntry = wheelConfig.entries.find((e) => e.id === winner.id)
+  const resolvedText =
+    originalEntry?.discordId ||
+    (Array.isArray(winner.texts) ? winner.texts[0] : winner.texts) ||
+    winner.text
+  console.log('[winner]', winner.id, resolvedText)
   return {
     animation: Buffer.from(arrayBuffer),
-    winner: {
-      ...winner,
-      text: resolvedText
-    }
+    winner: { ...winner, text: resolvedText, discordId: originalEntry?.discordId }
   }
 }
 
@@ -184,6 +201,7 @@ export async function spinAndSendToDiscord(
 ) {
   const loop = getOptionBoolean(interaction, 'loop', 'ON')
   const spoiler = getOptionBoolean(interaction, 'spoilertag')
+  const showRespinButton = getOptionBoolean(interaction, 'respinbutton', 'ON')
   const userId = interaction.member?.user.id || interaction.user!.id
 
   // Send a 1-second looping clip to the API so it generates fast, then loop it
@@ -199,7 +217,9 @@ export async function spinAndSendToDiscord(
     return
   }
 
-  const stateKey = saveSpinState({ wheelConfig, imageFormat, winner: result.winner, spoiler, userId })
+  const stateKey = showRespinButton
+    ? saveSpinState({ wheelConfig, imageFormat, winner: result.winner, spoiler, userId, showRespinButton })
+    : undefined
   const message = await sendAnimation(interaction.token, result.animation, imageFormat, stateKey, true)
 
   await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1_000 + 500))
@@ -242,7 +262,7 @@ export async function editAnimationMessage(
   wheelConfig: WheelConfig,
   spoiler: boolean,
   userId: string,
-  stateKey: string
+  stateKey: string | undefined
 ) {
   if (!winner.id) throw Error('Winning entry is missing ID')
   let winnerText = winner.text ?? ''
@@ -256,7 +276,7 @@ export async function editAnimationMessage(
         (winner.message ?? wheelConfig.winnerMessage).replaceAll('%u', `<@${userId}>`) ||
         'We have a winner!'
       }` + winnerText,
-    components: [buildSpinButtons(stateKey, false)]
+    ...(stateKey ? { components: [buildSpinButtons(stateKey, false)] } : { components: [] })
   } as any)
 }
 
