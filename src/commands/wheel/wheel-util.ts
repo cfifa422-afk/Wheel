@@ -1,6 +1,7 @@
 import { env } from 'node:process'
 import validateColor from 'validate-color'
 import { client, CLIENT_ID, DEFAULT_SPIN_TIME, MAX_VISIBLE_ENTRIES } from '../../app-util.ts'
+import { recordSpin } from '../../spin-history.ts'
 import { themeDictionary } from './ColorThemeList.ts'
 import { saveSpinState } from './wheel-state.ts'
 import type {
@@ -216,6 +217,13 @@ export async function spinAndSendToDiscord(
     await sendAnimation(interaction.token, result.animation, imageFormat)
     return
   }
+
+  recordSpin({
+    timestamp: Date.now(),
+    subcommand: interaction.data.options[0].name,
+    entryCount: wheelConfig.entries.length,
+    guildId: interaction.guild_id ?? null
+  })
 
   const stateKey = showRespinButton
     ? saveSpinState({ wheelConfig, imageFormat, winner: result.winner, spoiler, userId, showRespinButton })
