@@ -1,5 +1,5 @@
 import { getSpinState, saveSpinState } from './wheel-state.ts'
-import { getAnimationFromWheelConfig, editAnimationMessage, sendSpinButtons } from './wheel-util.ts'
+import { getAnimationFromWheelConfig, editAnimationMessage, buildSpinButtons } from './wheel-util.ts'
 import { followupDeferredResponse } from '../command-util.ts'
 import { client, CLIENT_ID } from '../../app-util.ts'
 
@@ -34,10 +34,19 @@ export async function handleRespinAction(interaction: any) {
 
   const result = await getAnimationFromWheelConfig(wheelConfig, state.imageFormat, true)
 
+  const newStateKey = saveSpinState({
+    wheelConfig,
+    imageFormat: state.imageFormat,
+    winner: result.winner,
+    spoiler: state.spoiler,
+    userId
+  })
+
   console.log(`Sending ${(result.animation.byteLength / 1_000_000).toFixed(2)}MB animation to Discord (respin)`)
   const animMsg = await client.interaction.createFollowupMessage(CLIENT_ID, interaction.token, {
-    files: [{ name: `wheel.${state.imageFormat}`, file: result.animation }]
-  })
+    files: [{ name: `wheel.${state.imageFormat}`, file: result.animation }],
+    components: [buildSpinButtons(newStateKey, true)]
+  } as any)
 
   await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1_000 + 500))
 
@@ -47,16 +56,7 @@ export async function handleRespinAction(interaction: any) {
     result.winner,
     wheelConfig,
     state.spoiler,
-    userId
+    userId,
+    newStateKey
   )
-
-  const newStateKey = saveSpinState({
-    wheelConfig,
-    imageFormat: state.imageFormat,
-    winner: result.winner,
-    spoiler: state.spoiler,
-    userId
-  })
-
-  await sendSpinButtons(interaction.token, result.winner, newStateKey, state.spoiler)
 }

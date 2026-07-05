@@ -186,31 +186,54 @@ export async function spinAndSendToDiscord(
   const spoiler = getOptionBoolean(interaction, 'spoilertag')
   const userId = interaction.member?.user.id || interaction.user!.id
 
-  await client.interaction.editFollowupMessage(CLIENT_ID, interaction.token, '@original', {
-    content: 'Spinning the wheel...'
-  })
-
   const result = await getAnimationFromWheelConfig(wheelConfig, imageFormat, loop)
-  const message = await sendAnimation(interaction.token, result.animation, imageFormat)
 
-  if (!result.winner.text) return
-
-  await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1_000 + 500))
-  await editAnimationMessage(interaction.token, message.id, result.winner, wheelConfig, spoiler, userId)
+  if (!result.winner.text) {
+    await sendAnimation(interaction.token, result.animation, imageFormat)
+    return
+  }
 
   const stateKey = saveSpinState({ wheelConfig, imageFormat, winner: result.winner, spoiler, userId })
-  await sendSpinButtons(interaction.token, result.winner, stateKey, spoiler)
+  const message = await sendAnimation(interaction.token, result.animation, imageFormat, stateKey, true)
+
+  await new Promise((r) => setTimeout(r, wheelConfig.spinTime * 1_000 + 500))
+  await editAnimationMessage(interaction.token, message.id, result.winner, wheelConfig, spoiler, userId, stateKey)
 }
 
 async function sendAnimation(
   interactionToken: string,
   animation: Buffer,
-  imageFormat: 'gif' | 'webp'
+  imageFormat: 'gif' | 'webp',
+  stateKey?: string,
+  disabled = false
 ) {
   console.log(`Sending ${(animation.byteLength / 1000000).toFixed(2)}MB animation to Discord`)
   return await client.interaction.createFollowupMessage(CLIENT_ID, interactionToken, {
-    files: [{ name: `wheel.${imageFormat}`, file: animation }]
-  })
+    files: [{ name: `wheel.${imageFormat}`, file: animation }],
+    ...(stateKey ? { components: [buildSpinButtons(stateKey, disabled)] } : {})
+  } as any)
+}
+
+export function buildSpinButtons(stateKey: string, disabled: boolean) {
+  return {
+    type: 1,
+    components: [
+      {
+        type: 2,
+        label: 'Remove winner and spin again',
+        style: 1,
+        custom_id: `spin_without:${stateKey}`,
+        disabled
+      },
+      {
+        type: 2,
+        label: 'Spin again (keep all)',
+        style: 2,
+        custom_id: `spin_with:${stateKey}`,
+        disabled
+      }
+    ]
+  }
 }
 
 export async function editAnimationMessage(
@@ -219,7 +242,8 @@ export async function editAnimationMessage(
   winner: WheelEntry,
   wheelConfig: WheelConfig,
   spoiler: boolean,
-  userId: string
+  userId: string,
+  stateKey: string
 ) {
   if (!winner.id) throw Error('Winning entry is missing ID')
   let winnerText = winner.text ?? ''
@@ -232,36 +256,8 @@ export async function editAnimationMessage(
       `### ${
         (winner.message ?? wheelConfig.winnerMessage).replaceAll('%u', `<@${userId}>`) ||
         'We have a winner!'
-      }` + winnerText
-  })
-}
-
-export async function sendSpinButtons(
-  token: string,
-  winner: WheelEntry,
-  stateKey: string,
-  spoiler: boolean
-) {
-  await client.interaction.createFollowupMessage(CLIENT_ID, token, {
-    components: [
-      {
-        type: 1,
-        components: [
-          {
-            type: 2,
-            label: 'Remove winner and spin again',
-            style: 1,
-            custom_id: `spin_without:${stateKey}`
-          },
-          {
-            type: 2,
-            label: 'Spin again (keep all)',
-            style: 2,
-            custom_id: `spin_with:${stateKey}`
-          }
-        ]
-      }
-    ]
+      }` + winnerText,
+    components: [buildSpinButtons(stateKey, false)]
   } as any)
 }
 
