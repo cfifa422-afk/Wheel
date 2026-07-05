@@ -343,7 +343,7 @@ export function createWheelConfig(config?: Partial<WheelConfig>): WheelConfig {
     maxNames: MAX_VISIBLE_ENTRIES,
     allowDuplicates: true,
     drawOutlines: false,
-    drawShadow: true,
+    drawShadow: false,
     pointerChangesColor: true,
     isAdvanced: false,
     winnerMessage: '',

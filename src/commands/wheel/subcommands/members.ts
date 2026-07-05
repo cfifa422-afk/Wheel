@@ -47,7 +47,7 @@ const members: WheelSubcommand = {
 
     const modifiedWheelConfig = wheelUtil.applyOptionsToWheelConfig(interaction, wheelConfig)
 
-    await wheelUtil.spinAndSendToDiscord(interaction, modifiedWheelConfig, 'webp')
+    await wheelUtil.spinAndSendToDiscord(interaction, modifiedWheelConfig, 'gif')
   }
 }
 
