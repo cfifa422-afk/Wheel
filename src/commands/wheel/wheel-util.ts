@@ -201,15 +201,15 @@ export async function spinAndSendToDiscord(
 ) {
   const loop = getOptionBoolean(interaction, 'loop', 'ON')
   const spoiler = getOptionBoolean(interaction, 'spoilertag')
-  const showRespinButton = getOptionBoolean(interaction, 'respinbutton', 'ON')
+  const showRespinButton = getOptionBoolean(interaction, 'respinbutton')
   const userId = interaction.member?.user.id || interaction.user!.id
 
-  // Send a 1-second looping clip to the API so it generates fast, then loop it
+  // Send a 1-second clip to the API so it generates fast, then hold it
   // client-side for the full spinTime before revealing the winner.
   const result = await getAnimationFromWheelConfig(
     { ...wheelConfig, spinTime: 1 },
     imageFormat,
-    true
+    loop
   )
 
   if (!result.winner.text) {
@@ -264,7 +264,9 @@ export async function editAnimationMessage(
   userId: string,
   stateKey: string | undefined
 ) {
-  if (!winner.id) throw Error('Winning entry is missing ID')
+  // If the winner has no id we can't power a respin button — show result without one.
+  const resolvedStateKey = winner.id ? stateKey : undefined
+
   let winnerText = winner.text ?? ''
   if (winnerText) {
     if (spoiler) winnerText = `||${winnerText}||`
@@ -276,7 +278,7 @@ export async function editAnimationMessage(
         (winner.message ?? wheelConfig.winnerMessage).replaceAll('%u', `<@${userId}>`) ||
         'We have a winner!'
       }` + winnerText,
-    ...(stateKey ? { components: [buildSpinButtons(stateKey, false)] } : { components: [] })
+    ...(resolvedStateKey ? { components: [buildSpinButtons(resolvedStateKey, false)] } : { components: [] })
   } as any)
 }
 

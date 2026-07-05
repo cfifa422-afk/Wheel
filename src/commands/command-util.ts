@@ -1,6 +1,7 @@
 import { client, CLIENT_ID } from '../app-util.ts'
 import {
   DInteractionResponseType,
+  UnloggedError,
   type APIInteraction,
   type APIUser,
   type APIGuildMember,
@@ -72,8 +73,8 @@ export function createCommandOptionsFromStrings(...strings: string[]) {
 }
 
 export async function getGuildMembers(guildId: string) {
+  // Paginated list — requires GUILD_MEMBERS privileged intent in the Developer Portal.
   try {
-    // Paginated list — requires GUILD_MEMBERS privileged intent in the Developer Portal.
     const members: APIGuildMember[] = []
     let newMembers: typeof members
     do {
@@ -83,8 +84,9 @@ export async function getGuildMembers(guildId: string) {
     } while (newMembers.length === 1000)
     return members
   } catch {
-    // Fallback: search with empty query — no privileged intent needed, max 1000 members.
-    return client.guild.searchGuildMembers(guildId, { query: '', limit: 1000 })
+    throw new UnloggedError(
+      '❌ Missing access. The bot needs the **Server Members** privileged intent enabled in the Discord Developer Portal to use this command.'
+    )
   }
 }
 
