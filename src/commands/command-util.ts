@@ -72,14 +72,20 @@ export function createCommandOptionsFromStrings(...strings: string[]) {
 }
 
 export async function getGuildMembers(guildId: string) {
-  const members: APIGuildMember[] = []
-  let newMembers: typeof members
-  do {
-    const after = members.at(-1)?.user?.id || '0'
-    newMembers = await client.guild.getGuildMembers(guildId, { limit: 1000, after })
-    members.push(...newMembers)
-  } while (newMembers.length === 1000)
-  return members
+  try {
+    // Paginated list — requires GUILD_MEMBERS privileged intent in the Developer Portal.
+    const members: APIGuildMember[] = []
+    let newMembers: typeof members
+    do {
+      const after = members.at(-1)?.user?.id || '0'
+      newMembers = await client.guild.getGuildMembers(guildId, { limit: 1000, after })
+      members.push(...newMembers)
+    } while (newMembers.length === 1000)
+    return members
+  } catch {
+    // Fallback: search with empty query — no privileged intent needed, max 1000 members.
+    return client.guild.searchGuildMembers(guildId, { query: '', limit: 1000 })
+  }
 }
 
 export function filterOutBots<T extends APIUser | APIGuildMember>(users: T[]) {
