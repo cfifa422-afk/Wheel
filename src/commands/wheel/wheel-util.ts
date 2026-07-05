@@ -186,7 +186,13 @@ export async function spinAndSendToDiscord(
   const spoiler = getOptionBoolean(interaction, 'spoilertag')
   const userId = interaction.member?.user.id || interaction.user!.id
 
-  const result = await getAnimationFromWheelConfig(wheelConfig, imageFormat, loop)
+  // Send a 1-second looping clip to the API so it generates fast, then loop it
+  // client-side for the full spinTime before revealing the winner.
+  const result = await getAnimationFromWheelConfig(
+    { ...wheelConfig, spinTime: 1 },
+    imageFormat,
+    true
+  )
 
   if (!result.winner.text) {
     await sendAnimation(interaction.token, result.animation, imageFormat)
