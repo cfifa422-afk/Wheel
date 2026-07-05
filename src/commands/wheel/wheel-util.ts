@@ -224,13 +224,6 @@ export function buildSpinButtons(stateKey: string, disabled: boolean) {
         style: 1,
         custom_id: `spin_without:${stateKey}`,
         disabled
-      },
-      {
-        type: 2,
-        label: 'Spin again (keep all)',
-        style: 2,
-        custom_id: `spin_with:${stateKey}`,
-        disabled
       }
     ]
   }
