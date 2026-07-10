@@ -33,7 +33,7 @@ export async function handleRespinAction(interaction: any) {
   }
 
   const result = await getAnimationFromWheelConfig(
-    { ...wheelConfig, spinTime: 1 },
+    wheelConfig,
     state.imageFormat,
     true
   )

@@ -204,10 +204,10 @@ export async function spinAndSendToDiscord(
   const showRespinButton = getOptionBoolean(interaction, 'respinbutton')
   const userId = interaction.member?.user.id || interaction.user!.id
 
-  // Send a 1-second clip to the API so it generates fast, then hold it
-  // client-side for the full spinTime before revealing the winner.
+  // Request the full-duration animation so the wheel completes a clean
+  // circular spin. The winner is revealed after the animation plays out.
   const result = await getAnimationFromWheelConfig(
-    { ...wheelConfig, spinTime: 1 },
+    wheelConfig,
     imageFormat,
     loop
   )
